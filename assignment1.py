@@ -184,6 +184,7 @@ def main(file_input, file_output):
         
         if not change:
             break
+            
         print("min", minIndex, "max", maxIndex)
         # begin = time.time()
         # S = calculateS(matches, points)
