@@ -1,92 +1,5 @@
 import itertools
-
-# def compare(a, b):
-#     if a[0] == b[0]:
-#         return a[1] - b[1]
-#     return a[0] - b[0]
-
-# def pick(status, min_x, min_y):
-#     for i in range(min_x, len(status)):
-#         if status[i] == 0:
-#             continue
-#         for j in range(i + 1, len(status)):
-#             if status[j] == 0:
-#                 continue
-#             if compare((i, j), (min_x, min_y)) >= 0:
-#                 return [i, j]
-#     return None
-
-# def search(status, k, n, min_x, min_y):
-#     matches = []
-#     # min_x = 0
-#     # min_y = 1
-    
-#     while sum(status) > 0:
-#         # tmp = list(map(lambda x: (x[0] + 1, x[1] + 1), matches))
-#         #print(matches)
-#         #print(min_x, min_y)
-#         couple = pick(status, 0, 1)
-#         print(couple)
-#         if not couple:
-#             # pop 1 couple out of stack
-#             previous = matches[-1]
-#             status[previous[0]] += 1
-#             status[previous[1]] += 1
-#             matches = matches[:-1]
-            
-#             # modify min_x, min_y
-#             min_x = previous[0]
-#             min_y = previous[1]
-#         else:
-#             status[couple[0]] -= 1
-#             status[couple[1]] -= 1
-#             matches.append((couple[0], couple[1]))
-#             min_x = couple[0]
-#             min_y = couple[1]
-        
-#         # increase min_x or min_y
-#         if min_y == n - 1:
-#             min_x += 1
-#             min_y = min_x + 1
-#         else:
-#             min_y += 1
-#         #print(matches)
-#     return matches
-
-# def search(status, n, min_x, min_y):
-#     # print(status)
-#     #print(min_x, min_y)
-#     #return 1,2 or 1,3 .....
-#     solutions = []
-#     couple = pick(status, min_x, min_y)
-#     #print(couple, min_x, min_y, status)
-#     if (not couple) or (couple[0] != min_x) or (couple[1] != min_y):
-#         return None
-#     #print('hello')
-
-#     status[min_x] -= 1
-#     status[min_y] -= 1
-
-#     # base case
-#     if sum(status) == 0:
-#         return [[couple]]
-
-#     for i in range(min_x, n):
-#         for j in range(i + 1, n):
-#             if compare((i, j), (min_x, min_y)) > 0:
-#                 subResult = search(status.copy(), n, i, j)
-#                 if not subResult:
-#                     continue
-#                 else:
-#                     solutions += list(map(lambda x: [couple] + x, subResult))
-                   
-    
-#     if min_x == 0:
-#         for x in solutions:
-#             if(len(x) == 25):
-#                 print(x)
-#     return solutions
-
+import time
 def intialState(n, k):
     matches = []
     if n*k % 2 == 1:
@@ -109,25 +22,103 @@ def check(matches, k):
     if all(map(lambda x: x == k, count)):
         return True
     else:
+        return False            
+
+def moveState(matches, points, s, average, minIndex, maxIndex):
+    maxArr = matches[maxIndex]
+    minArr = matches[minIndex]
+    optimalValue = abs(s[minIndex] - average) + abs(s[maxIndex] - average)
+
+    cached = []
+    for i in range(len(maxArr)):
+        if maxArr[i] == minIndex or maxArr[i] in minArr:
+            continue
+        for j in range(len(minArr)):
+            if minArr[j] == maxIndex or minArr[j] in maxArr:
+                continue
+            maxArr[i], minArr[j] = minArr[j], maxArr[i]
+            sMin, sMax = calculateS([minArr,maxArr], points)
+            newValue = abs(sMin - average) + abs(sMax - average)
+            if newValue < optimalValue:
+                optimalValue = newValue
+                cached = [i, j]
+            maxArr[i], minArr[j] = minArr[j], maxArr[i]
+    if len(cached) > 0:
+        print('min cached', cached[1])
+        print('max cached', cached[0])
+        print(minArr[cached[1]])
+        maxArr[cached[0]], minArr[cached[1]] = minArr[cached[1]], maxArr[cached[0]]
+        return True
+    else:
         return False
+
+def calculateS(matches,points):
+    return list(map(lambda x: sum(map(lambda i: points[i], x))/len(x), matches))
+
+def findMinMax(s):
+    minIndex = 0
+    maxIndex = 0
+    for i in range(1, len(s)):
+        if s[i] > s[maxIndex]:
+            maxIndex = i
+        if s[i] < s[minIndex]:
+            minIndex = i
+    return maxIndex, minIndex
+
+def thayHeuristic(matches, points):
+    result = 0
+    s = calculateS(matches, points)
+    for i in range(len(s)):
+        for j in range(i + 1, len(s)):
+            result += abs(s[i] - s[j])
+    return result
             
+
+def heuristic(s):
+    average = sum(s)/len(s)
+    return sum(map(lambda x: abs(x - average), s))
+
 
 def main(file_input, file_output):
     # read input 
-    file = open("input.txt","r")
+    file = open("data/input.txt","r")
     n, k = file.readline()[:-1].split(" ")
     n, k = int(n), int(k)
     points = []
-    #for index in range(n):
-    #    points.append(int(file.readline()))
+    for index in range(n):
+        points.append(int(file.readline()))
     file.close()
     # run algorithm
-    # if k and n are all odd => cannot find solution
-    #status = [k]*n
-    #average = sum(points)/len(points)
+    average = sum(points)/len(points)
     matches = intialState(n,k)
-    print(matches)
-    print(check(matches, k))
+    S = calculateS(matches, points)
+    #print(S)
+    minIndex, maxIndex = findMinMax(S)
+    #print("average: ",average)
+    #print(matches)
+    while True:
+        print('heuristic', heuristic(S))
+        print("thay he:", thayHeuristic(matches,points) )
+        #print(check(matches, k))
+        # print('min', matches[minIndex])
+        # print('max', matches[maxIndex])
+        begin = time.time()
+        change = moveState(matches,points,S,average,minIndex,maxIndex)
+        end = time.time()
+        print('moveState: ', end - begin)
+        
+        if not change:
+            break
+        print("min", minIndex, "max", maxIndex)
+        begin = time.time()
+        S = calculateS(matches, points)
+        end = time.time()
+        print('calculateS', end - begin)
+        begin = time.time()
+        minIndex, maxIndex = findMinMax(S)
+        end = time.time()
+        print('findMinMax: ', end - begin)
+        #print(matches)
     # write output
     return 0
 
