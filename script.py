@@ -8,7 +8,7 @@ inputFile.write(n + " " +k)
 inputFile.write("\n")
 
 for x in range(int(n)):
-    t = random.randint(1,12)
+    t = random.randint(1,2*int(n))
     inputFile.write(str(t))
     inputFile.write("\n")
 
